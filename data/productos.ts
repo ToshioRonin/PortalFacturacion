@@ -1,0 +1,12 @@
+export const productos = [
+  {
+    id: 1,
+    nombre: "Laptop",
+    precio: 15000
+  },
+  {
+    id: 2,
+    nombre: "Mouse",
+    precio: 300
+  }
+];
