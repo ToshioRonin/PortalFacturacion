@@ -42,3 +42,32 @@ export async function DELETE(
 
     return Response.json({ message: "Factura eliminada" });
 }
+
+export async function GET(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id } = await params;
+    const facturaId = parseInt(id);
+
+    // Validación
+    if (isNaN(facturaId)) {
+        return Response.json(
+            { error: "ID inválido" },
+            { status: 400 }
+        );
+    }
+
+    const factura = await prisma.factura.findUnique({
+        where: { id: facturaId },
+    });
+
+    if (!factura) {
+        return Response.json(
+            { error: "Factura no encontrada" },
+            { status: 404 }
+        );
+    }
+
+    return Response.json(factura);
+}
