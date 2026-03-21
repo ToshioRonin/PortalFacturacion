@@ -1,0 +1,8 @@
+-- CreateTable
+CREATE TABLE "Factura" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "clienteId" INTEGER NOT NULL,
+    "fecha" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "productos" JSONB NOT NULL,
+    "total" REAL NOT NULL
+);
