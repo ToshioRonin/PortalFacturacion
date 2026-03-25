@@ -71,3 +71,46 @@ export async function GET(
 
     return Response.json(factura);
 }
+
+export async function PATCH(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id } = await params;
+    const facturaId = parseInt(id);
+
+    if (isNaN(facturaId)) {
+        return Response.json(
+            { error: "ID inválido" },
+            { status: 400 }
+        );
+    }
+
+    const body = await req.json();
+    const { clienteId, productos } = body;
+
+    // Objeto dinámico (solo lo que venga)
+    const data: any = {};
+
+    if (clienteId !== undefined) {
+        data.clienteId = clienteId;
+    }
+
+    if (productos !== undefined) {
+        data.productos = productos;
+
+        // recalcular total SOLO si cambian productos
+        const total = productos.reduce((acc: number, item: any) => {
+            return acc + item.cantidad * item.precio;
+        }, 0);
+
+        data.total = total;
+    }
+
+    const factura = await prisma.factura.update({
+        where: { id: facturaId },
+        data,
+    });
+
+    return Response.json(factura);
+}
