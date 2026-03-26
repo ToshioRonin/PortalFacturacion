@@ -23,7 +23,6 @@ export default function NuevaFacturaPage() {
   const [iva, setIva] = useState(0);
   const [total, setTotal] = useState(0);
 
-  // Cálculo automático de montos
   useEffect(() => {
     const nuevoSubtotal = items.reduce((acc, item) => acc + (item.cantidad * item.precio), 0);
     const nuevoIva = nuevoSubtotal * 0.16;
@@ -67,7 +66,10 @@ export default function NuevaFacturaPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           clienteId, 
-          productos: items 
+          productos: items,
+          subtotal,
+          iva,
+          total
         }),
       });
 
@@ -76,15 +78,13 @@ export default function NuevaFacturaPage() {
         router.refresh();
       }
     } catch (error) {
-      console.error("Error al guardar:", error);
+      console.error(error);
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans p-6 md:p-10">
       <div className="max-w-6xl mx-auto">
-        
-        {/* --- HEADER --- */}
         <header className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-4">
             <Link 
@@ -109,8 +109,6 @@ export default function NuevaFacturaPage() {
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* --- COLUMNA IZQUIERDA: CLIENTE Y TOTAL --- */}
           <div className="lg:col-span-4 space-y-6">
             <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
               <div className="flex items-center gap-3 mb-6">
@@ -132,14 +130,13 @@ export default function NuevaFacturaPage() {
                   >
                     <option value={0}>Selecciona un cliente...</option>
                     {clientes.map(c => (
-                      <option key={c.id} value={c.id}>{c.nombre} (ID: {c.id})</option>
+                      <option key={c.id} value={c.id}>{c.nombre}</option>
                     ))}
                   </select>
                 </div>
               </div>
             </section>
 
-            {/* RESUMEN VISUAL */}
             <section className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 shadow-2xl shadow-blue-900/20 text-white relative overflow-hidden">
                <div className="absolute top-0 right-0 p-4 opacity-10">
                  <ReceiptIcon size={120} />
@@ -161,7 +158,6 @@ export default function NuevaFacturaPage() {
             </section>
           </div>
 
-          {/* --- COLUMNA DERECHA: TABLA DE PRODUCTOS --- */}
           <div className="lg:col-span-8">
             <section className="bg-slate-900 border border-slate-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
               <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50 backdrop-blur-sm">
@@ -247,7 +243,6 @@ export default function NuevaFacturaPage() {
               </div>
             </section>
           </div>
-
         </div>
       </div>
     </div>
