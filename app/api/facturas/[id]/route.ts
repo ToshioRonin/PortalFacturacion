@@ -1,33 +1,58 @@
 import { prisma } from "@/lib/prisma";
 import { parse } from "path";
 
-//Actualizar factura
 export async function PUT(
-    req: Request,
-    { params }: { params: Promise<{ id: string }> }
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  try {
     const { id } = await params;
     const facturaId = parseInt(id);
+
+    if (isNaN(facturaId)) {
+      return Response.json({ error: "ID inválido" }, { status: 400 });
+    }
 
     const body = await req.json();
     const { clienteId, productos } = body;
 
-    const total = productos.reduce((acc: number, item: any) => {
-        return acc + (item.cantidad * item.precio);
+    if (!clienteId || !productos || productos.length === 0) {
+      return Response.json(
+        { error: "Datos incompletos" },
+        { status: 400 }
+      );
+    }
+
+    //  RECALCULAR TODO
+    const subtotal = productos.reduce((acc: number, item: any) => {
+      const sub = item.cantidad * item.precio;
+      item.subtotal = sub;
+      return acc + sub;
     }, 0);
 
+    const iva = parseFloat((subtotal * 0.16).toFixed(2));
+    const total = parseFloat((subtotal + iva).toFixed(2));
+
     const factura = await prisma.factura.update({
-        where: { id: facturaId },
-        data: {
-            clienteId,
-            productos,
-            total
-        }
+      where: { id: facturaId },
+      data: {
+        clienteId,
+        productos,
+        subtotal,
+        iva,
+        total,
+      },
     });
 
     return Response.json(factura);
+  } catch (error) {
+    console.error(error);
+    return Response.json(
+      { error: "Error al actualizar la factura" },
+      { status: 500 }
+    );
+  }
 }
-
 // Eliminar factura
 export async function DELETE(
     req: Request,
@@ -73,44 +98,66 @@ export async function GET(
 }
 
 export async function PATCH(
-    req: Request,
-    { params }: { params: Promise<{ id: string }> }
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  try {
     const { id } = await params;
     const facturaId = parseInt(id);
 
     if (isNaN(facturaId)) {
-        return Response.json(
-            { error: "ID inválido" },
-            { status: 400 }
-        );
+      return Response.json(
+        { error: "ID inválido" },
+        { status: 400 }
+      );
     }
 
     const body = await req.json();
     const { clienteId, productos } = body;
 
-    // Objeto dinámico (solo lo que venga)
     const data: any = {};
 
+    // 🧍 Actualizar cliente (si viene)
     if (clienteId !== undefined) {
-        data.clienteId = clienteId;
+      data.clienteId = clienteId;
     }
 
+    // 📦 Si vienen productos → recalcular TODO
     if (productos !== undefined) {
-        data.productos = productos;
+      const subtotal = productos.reduce((acc: number, item: any) => {
+        const sub = item.cantidad * item.precio;
+        item.subtotal = sub;
+        return acc + sub;
+      }, 0);
 
-        // recalcular total SOLO si cambian productos
-        const total = productos.reduce((acc: number, item: any) => {
-            return acc + item.cantidad * item.precio;
-        }, 0);
+      const iva = parseFloat((subtotal * 0.16).toFixed(2));
+      const total = parseFloat((subtotal + iva).toFixed(2));
 
-        data.total = total;
+      data.productos = productos;
+      data.subtotal = subtotal;
+      data.iva = iva;
+      data.total = total;
+    }
+
+    // ⚠️ Validar que sí haya algo que actualizar
+    if (Object.keys(data).length === 0) {
+      return Response.json(
+        { error: "No hay datos para actualizar" },
+        { status: 400 }
+      );
     }
 
     const factura = await prisma.factura.update({
-        where: { id: facturaId },
-        data,
+      where: { id: facturaId },
+      data,
     });
 
     return Response.json(factura);
+  } catch (error) {
+    console.error(error);
+    return Response.json(
+      { error: "Error al actualizar la factura" },
+      { status: 500 }
+    );
+  }
 }
