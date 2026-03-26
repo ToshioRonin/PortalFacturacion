@@ -1,105 +1,166 @@
-import { PlusIcon, FileTextIcon, UsersIcon, DollarSignIcon } from "lucide-react";
-import Link from "next/link";
+"use client";
 
+import { 
+  FileTextIcon, 
+  TrendingUpIcon, 
+  UsersIcon, 
+  PlusIcon,
+  Loader2Icon
+} from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { clientes } from "../data/clientes";
+
+// Importación de tus componentes modulares
+import StatCard from "./components/StatCard";
 import SearchBar from "./components/SearchBar";
-import StatCard from "./components//StatCard";
 import InvoiceTable from "./components/InvoiceTable";
 import InvoiceRow from "./components/InvoiceRow";
 import EmptyState from "./components/EmptyState";
 
 export default function HomePage() {
-  // Simulación de datos (luego vendrán de Prisma)
-  const facturas = [
-    { id: 101, cliente: "Acme Corp", total: 15420.50, fecha: "23 Mar 2026" },
-    { id: 102, cliente: "Globex Corporation", total: 8900.00, fecha: "22 Mar 2026" },
-    { id: 103, cliente: "Soylent Co", total: 21500.99, fecha: "20 Mar 2026" },
-  ];
+  const [facturasProcesadas, setFacturasProcesadas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Cálculo de estadísticas simples
-  const totalFacturado = facturas.reduce((acc, curr) => acc + curr.total, 0);
+  // 1. Cargar datos desde la API (Prisma)
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const response = await fetch('/api/facturas');
+        const data = await response.json();
+        
+        const procesadas = data.map((f: any) => {
+          const cliente = clientes.find((c) => c.id === f.clienteId);
+          const productosArray = Array.isArray(f.productos) ? f.productos : [];
+          
+          const subtotal = productosArray.reduce((acc: number, curr: any) => 
+            acc + (Number(curr.precio || 0) * Number(curr.cantidad || 0)), 0);
+
+          return {
+            id: f.id,
+            cliente: cliente?.nombre || "Cliente Desconocido",
+            total: subtotal * 1.16,
+            fechaFormateada: new Date(f.fecha).toLocaleDateString('es-MX', {
+              day: '2-digit', month: 'short', year: 'numeric'
+            }),
+          };
+        });
+        
+        setFacturasProcesadas(procesadas);
+      } catch (error) {
+        console.error("Error al cargar facturas:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  // 2. Lógica de Eliminación (Actualiza DB y UI)
+  const handleDelete = async (id: number) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar esta factura?")) return;
+
+    try {
+      const res = await fetch(`/api/facturas/${id}`, { method: 'DELETE' });
+
+      if (res.ok) {
+        // Filtramos el estado local para que desaparezca de la tabla al instante
+        setFacturasProcesadas((prev) => prev.filter(f => f.id !== id));
+      } else {
+        alert("Hubo un problema al eliminar la factura en el servidor.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Error de conexión al intentar eliminar.");
+    }
+  };
+
+  const montoTotalGlobal = facturasProcesadas.reduce((acc, curr) => acc + curr.total, 0);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white">
+        <Loader2Icon size={40} className="text-blue-500 animate-spin mb-4" />
+        <p className="font-bold tracking-tighter opacity-50">Sincronizando base de datos...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans">
       <main className="max-w-7xl mx-auto p-6 md:p-10">
         
         {/* --- HEADER --- */}
-        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10 pb-6 border-b border-slate-800">
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-12">
           <div>
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-950">
-                <FileTextIcon className="text-white" size={24} />
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-600 p-3 rounded-2xl shadow-2xl shadow-blue-900/40">
+                <FileTextIcon className="text-white" size={28} />
               </div>
-              <h1 className="text-3xl font-extrabold tracking-tighter text-white">
-                Portal <span className="text-blue-500">Facturación</span>
-              </h1>
+              <div>
+                <h1 className="text-3xl font-black tracking-tighter text-white">
+                  Portal <span className="text-blue-500">Facturación</span>
+                </h1>
+                <p className="text-slate-500 text-sm font-medium italic">Gestión de Comprobantes Fiscales</p>
+              </div>
             </div>
-            <p className="text-slate-400 mt-2 ml-14">Administra tus comprobantes y clientes.</p>
           </div>
           
           <Link 
             href="/facturas"
-            className="flex items-center justify-center gap-2.5 bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-md shadow-blue-950/50 hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center justify-center gap-2.5 bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-blue-950/50 hover:scale-[1.02] active:scale-98 group"
           >
-            <PlusIcon size={20} />
-            Crear Nueva Factura
+            <PlusIcon size={20} className="group-hover:rotate-90 transition-transform" />
+            Nueva Factura
           </Link>
         </header>
 
-        {/* --- STATS SECTION --- */}
+        {/* --- STATS --- */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <StatCard 
-            label="Total Facturado" 
-            value={`$${totalFacturado.toLocaleString()}`} 
-            icon={DollarSignIcon}
-            trend="+12.5%"
+            label="Monto Total" 
+            value={`$${montoTotalGlobal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
+            icon={TrendingUpIcon}
+            trend="+5.2%"
             trendPositive={true}
           />
           <StatCard 
             label="Facturas Emitidas" 
-            value={facturas.length.toString()} 
+            value={facturasProcesadas.length.toString()}
             icon={FileTextIcon}
           />
           <StatCard 
-            label="Clientes Activos" 
-            value="12" 
+            label="Clientes Registrados" 
+            value={clientes.length.toString()}
             icon={UsersIcon}
-            trend="Estable"
-            trendPositive={true}
           />
         </div>
 
-        {/* --- SEARCH & FILTERS --- */}
+        {/* --- SEARCH --- */}
         <SearchBar />
 
-        {/* --- MAIN CONTENT (Table or Empty State) --- */}
-        {facturas.length > 0 ? (
-          <InvoiceTable count={facturas.length}>
-            {facturas.map((f) => (
+        {/* --- DATA TABLE --- */}
+        {facturasProcesadas.length > 0 ? (
+          <InvoiceTable count={facturasProcesadas.length}>
+            {facturasProcesadas.map((factura) => (
               <InvoiceRow 
-                key={f.id}
-                id={f.id}
-                cliente={f.cliente}
-                fecha={f.fecha}
-                total={f.total}
-                status={null} // Omitido según tu instrucción
+                key={factura.id}
+                id={factura.id}
+                cliente={factura.cliente}
+                fecha={factura.fechaFormateada}
+                total={factura.total}
+                onDelete={handleDelete} // <--- Vinculado correctamente
+                status={
+                  <span className="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase border border-emerald-500/20 tracking-widest">
+                    Vigente
+                  </span>
+                }
               />
             ))}
           </InvoiceTable>
         ) : (
           <EmptyState />
         )}
-
-        {/* --- FOOTER INFO --- */}
-        <footer className="mt-12 py-6 border-t border-slate-900 flex justify-between items-center text-slate-600 text-sm">
-          <p>© 2026 Portal de Facturación Monolítico</p>
-          <div className="flex gap-4">
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-              SQLite Online
-            </span>
-          </div>
-        </footer>
-
       </main>
     </div>
   );

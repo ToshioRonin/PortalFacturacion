@@ -1,6 +1,12 @@
+"use client";
+
 import { SearchIcon, SlidersHorizontalIcon } from "lucide-react";
 
-export default function SearchBar() {
+interface SearchBarProps {
+  onSearch?: (term: string) => void; 
+}
+
+export default function SearchBar({ onSearch }: SearchBarProps) {
   return (
     <div className="w-full flex gap-4 items-center mb-8">
       <div className="relative flex-grow group">
@@ -10,6 +16,7 @@ export default function SearchBar() {
         
         <input 
           type="text" 
+          onChange={(e) => onSearch?.(e.target.value)} 
           placeholder="Buscar por cliente, ID o monto..." 
           className="w-full bg-slate-900 text-slate-200 pl-12 pr-4 py-4 rounded-2xl border border-slate-800 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-600/50 focus:border-blue-500 transition-all placeholder:text-slate-600"
         />

@@ -1,4 +1,11 @@
-import { UserIcon, DollarSignIcon, PencilIcon, Trash2Icon, EyeIcon } from "lucide-react";
+import {
+  UserIcon,
+  DollarSignIcon,
+  PencilIcon,
+  Trash2Icon,
+  EyeIcon,
+} from "lucide-react";
+import Link from "next/link";
 
 interface InvoiceRowProps {
   id: number;
@@ -6,9 +13,17 @@ interface InvoiceRowProps {
   fecha: string;
   total: number;
   status: React.ReactNode;
+  onDelete?: (id: number) => void;
 }
 
-export default function InvoiceRow({ id, cliente, fecha, total, status }: InvoiceRowProps) {
+export default function InvoiceRow({
+  id,
+  cliente,
+  fecha,
+  total,
+  status,
+  onDelete,
+}: InvoiceRowProps) {
   return (
     <tr className="hover:bg-slate-800/40 transition-all group border-l-2 border-transparent hover:border-blue-500">
       <td className="px-8 py-5">
@@ -30,21 +45,30 @@ export default function InvoiceRow({ id, cliente, fecha, total, status }: Invoic
       <td className="px-8 py-5">
         <div className="flex items-center text-lg font-black text-emerald-400 tracking-tighter">
           <DollarSignIcon size={16} className="mr-0.5 opacity-70" />
-          {total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+          {total.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
         </div>
       </td>
-      <td className="px-8 py-5">
-        {status}
-      </td>
+      <td className="px-8 py-5">{status}</td>
       <td className="px-8 py-5">
         <div className="flex justify-center items-center gap-2">
-          <button className="p-2.5 bg-slate-800 text-slate-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all border border-slate-700">
+          <Link
+            href={`/details/${id}`}
+            className="p-2.5 bg-slate-800 text-slate-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all border border-slate-700"
+          >
             <EyeIcon size={18} />
-          </button>
-          <button className="p-2.5 bg-slate-800 text-slate-400 hover:text-amber-400 hover:bg-amber-400/10 rounded-xl transition-all border border-slate-700">
+          </Link>
+
+          <Link
+            href={`/facturas/${id}`}
+            className="p-2.5 bg-slate-800 text-slate-400 hover:text-amber-400 hover:bg-amber-400/10 rounded-xl transition-all border border-slate-700"
+          >
             <PencilIcon size={18} />
-          </button>
-          <button className="p-2.5 bg-slate-800 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all border border-slate-700">
+          </Link>
+
+          <button
+            onClick={() => onDelete?.(id)}
+            className="p-2.5 bg-slate-800 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all border border-slate-700"
+          >
             <Trash2Icon size={18} />
           </button>
         </div>
