@@ -1,36 +1,165 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📦 Portal de Facturación
 
-## Getting Started
+Este proyecto es un portal de facturación desarrollado con **Next.js + Prisma + SQLite**, utilizando una arquitectura monolítica (frontend + backend en un solo proyecto).
 
-First, run the development server:
+---
+
+## 🚀 Requisitos
+
+Antes de comenzar, asegúrate de tener instalado:
+
+* Node.js (v18 o superior recomendado)
+* npm
+
+---
+
+## 🛠 Instalación del proyecto
+
+Clona el repositorio o descarga el proyecto, luego ejecuta:
+
+```bash
+npm install
+```
+
+---
+
+## ⚙️ Configuración de variables de entorno
+
+Crea un archivo `.env` en la raíz del proyecto (si no existe) y agrega lo siguiente:
+
+```env
+DATABASE_URL="file:./prisma/dev.db"
+```
+
+---
+
+## 🗄 Configuración de la base de datos (Prisma)
+
+Este paso es **OBLIGATORIO**, ya que la base de datos no se incluye automáticamente.
+
+### 1. Generar cliente de Prisma
+
+```bash
+npx prisma generate
+```
+
+### 2. Ejecutar migraciones
+
+```bash
+npx prisma migrate dev
+```
+
+Esto realizará lo siguiente:
+
+* Creará la base de datos `dev.db`
+* Creará la tabla `Factura`
+* Aplicará las migraciones existentes
+
+---
+
+## ▶️ Ejecutar el proyecto
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir en el navegador:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🧪 Probar la API
 
-To learn more about Next.js, take a look at the following resources:
+Base URL:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+http://localhost:3000/api/facturas
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 📌 Endpoints disponibles
 
-## Deploy on Vercel
+| Método | Endpoint          | Descripción                |
+| ------ | ----------------- | -------------------------- |
+| GET    | /api/facturas     | Obtener todas las facturas |
+| POST   | /api/facturas     | Crear una factura          |
+| PUT    | /api/facturas/:id | Actualizar factura         |
+| DELETE | /api/facturas/:id | Eliminar factura           |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📥 Ejemplo de body (POST / PUT)
+
+```json
+{
+  "clienteId": 1,
+  "productos": [
+    {
+      "productoId": 1,
+      "cantidad": 2,
+      "precio": 15000
+    },
+    {
+      "productoId": 2,
+      "cantidad": 1,
+      "precio": 300
+    }
+  ]
+}
+```
+
+> ⚠️ El campo `total` se calcula automáticamente en el backend.
+
+---
+
+## 🔍 Ver base de datos (opcional)
+
+Puedes visualizar la base de datos con:
+
+```bash
+npx prisma studio
+```
+
+Se abrirá en:
+
+```
+http://localhost:5555
+```
+
+---
+
+## ⚠️ Problemas comunes
+
+### ❌ Error: `The table 'Factura' does not exist`
+
+Solución:
+
+```bash
+npx prisma migrate dev
+```
+
+---
+
+### ❌ Se crea otra base de datos en la raíz
+
+Verifica que tu `.env` tenga:
+
+```env
+DATABASE_URL="file:./prisma/dev.db"
+```
+
+---
+
+## 🧠 Notas
+
+* Los **clientes y productos** se manejan en memoria (arrays).
+* Solo las **facturas** se almacenan en la base de datos.
+* El proyecto está diseñado para fines académicos.
+
+---
+
+## 👨‍💻 Autor
+
+Proyecto desarrollado como práctica de CRUD con Next.js y Prisma.
